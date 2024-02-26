@@ -39,7 +39,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.sanlorng.lib.sourcecodestring.sample"
+    namespace = "com.sanlorng.lib.sourcecodestring.example"
     compileSdk = 34
     defaultConfig {
         minSdk = 26
