@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    group = "org.jetbrains.kotlinx.multiplatform-library-template"
+    group = "com.sanlorng.lib.source-code-string"
     version = "0.0.1"
 }
 

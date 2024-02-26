@@ -1,17 +1,98 @@
 [![official project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
-# Multiplatform library template
+# Source Code String
 
 ## What is it?
 
-It is the barebones library project intended to quickly bootstrap a Kotlin Multiplatform library, that is deployable to Maven Central.
+It is a ksp plugin intended to generate source code string.
 
-It has only one function: generate the [Fibonacci sequence](https://en.wikipedia.org/wiki/Fibonacci_sequence) starting from platform-provided numbers. Also, it has a test for each platform just to be sure that tests run.
+## How to use it
 
-Note that no other actions or tools usually required for the library development are set up, such as [tracking of backwards compatibility]
-(https://kotlinlang.org/docs/jvm-api-guidelines-backward-compatibility.html#tools-designed-to-enforce-backward-compatibility), explicit API mode,
-licensing, contribution guideline, code of conduct and others.
+1. Add ksp plugin in your module's `build.gradle.kts`
 
+```kotlin
+plugins {
+   id("com.google.devtools.ksp") version {versionOfKsp}
+}
+```
+
+2. Add library in your module's `build.gradle.kts`
+```kotlin
+commonMain {
+    dependecies {
+        implementation("lib")
+    }
+}
+```
+3. Add processor to your module's `build.gradle.kts`
+```kotlin
+dependencies {
+    val processor = project(":source-code-processor")
+    add("kspCommonMainMetadata", processor)
+}
+```
+4. Workaround for ksp generate common main source code, add it in your module's `build.gradle.kts`
+```kotlin
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
+    if (name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
+```
+5. Add source dir to your `commonMain`
+```kotlin
+commonMain {
+    kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+}
+```
+6. Add `Sample` annotation to your function, like:
+```kotlin
+@Sample
+fun sampleCode() {
+    //Your source code
+}
+```
+when you build the module, the library will generate a string property named `sourceCodeOfSampleCode`, and it's content:
+```kotlin
+internal val sourceCodeOfSampleCode: String
+    get() = """
+    |@Sample
+    |fun sampleCode() {
+    |    //Your source code
+    |}
+    """.trimMargin()
+```
+
+## Advance Usage
+See `example` module's `build.gradle.kts`
+```kotlin
+ksp { 
+    // add inline modifier for property getter, default is true
+    arg("SourceCodeString.inlineGetter", "false")
+    // set property as getter default is true
+    arg("SourceCodeString.getter", "false")
+    // set package name, default is null, when packageName is not null, the property will generate in a single kt file
+    arg("SourceCodeString.packageName", "com.sanlorng.lib.generated")
+    // set class name, default is null, when className is not null, will generate a class with the name, and set property as the class' property
+    arg("SourceCodeString.className", "Source")
+    // generate source class as object, default is true
+    arg("SourceCodeString.classAsObject", "false")
+    // set property as extendProperty if generated a source class or source object, default is false
+    arg("SourceCodeString.extendProperty", "true")
+    // set property name template, default is sourceCodeOf%s
+    arg("SourceCodeString.nameTemplate", "codeOf%s")
+    // set generated file name, default is __SampleCodeString
+    arg("SourceCodeString.fileName", "_codeGenerating")
+    // transform the function name first char as upper case when generate property name
+    arg("SourceCodeString.upperCaseFirstChar", "false")
+    // add inline modifier for property
+    arg("SourceCodeString.inline", "true")
+    // set the custom annotation for tag function, if you don't want to use @Sample
+    arg("SourceCodeString.sampleAnnotationName", "SampleCode")
+    // set the custom annotation for tag function, if you don't want to use @Sample
+    arg("SourceCodeString.sampleAnnotationPackage", "com.sanlorng.lib.other")
+}
+```
 ## How do I build it?
 
 1. - [x] Clone this repository ot just [use it as template](https://github.com/Kotlin/multiplatform-library-template/generate)

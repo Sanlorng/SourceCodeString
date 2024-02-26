@@ -1,14 +1,25 @@
 [versions]
-agp = "8.0.2"
-kotlin = "1.9.0"
+activity = "1.8.2"
+agp = "8.2.1"
+kotlin = "1.9.22"
+ksp = "1.9.22-1.0.17"
 nexus-publish = "2.0.0-rc-1"
 android-minSdk = "24"
 android-compileSdk = "33"
+compose = "1.6.0-beta02"
 
 [libraries]
+androidx-activity = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlin" }
 nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+ksp-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-processing = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
+kotlin-poet = "com.squareup:kotlinpoet-ksp:1.16.0"
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
