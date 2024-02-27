@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sanlorng.lib.generated.Source
 import com.sanlorng.lib.generated.codeOfExampleApp
-import com.sanlorng.lib.generated.codeOfStringTemplateTest
+import com.sanlorng.lib.generated.stringTemplateSourceCode
 import com.sanlorng.lib.sourcecodestring.annotation.Sample
 
 @Composable
@@ -51,12 +51,12 @@ fun ExampleApp() {
                 )
             }
 
-            Text("sourceCodeOfStringTemplateTest:\n${source.codeOfStringTemplateTest}")
+            Text("sourceCodeOfStringTemplateTest:\n${source.stringTemplateSourceCode}")
         }
     }
 }
 
-@Sample
+@Sample("stringTemplate", nameTemplate = "%sSourceCode", upperFirstChar = "false", inline = "false")
 fun stringTemplateTest() {
     val test1 = "test"
     val test2 = "test with: $test1"

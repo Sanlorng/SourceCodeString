@@ -1,9 +1,7 @@
 package com.sanlorng.lib.sourcecodestring.processor
 
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSFile
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.symbol.impl.kotlin.KSFunctionDeclarationImpl
 import com.sanlorng.lib.sourcecodestring.annotation.Sample
 import com.squareup.kotlinpoet.*
@@ -105,26 +103,47 @@ class SampleCodeProcessor(
     }
 
     private fun buildProperty(function: KSFunctionDeclarationImpl, className: ClassName? = null): PropertySpec {
-        val functionName = function.simpleName.asString().let {
-            if (config.upperCaseFirstChar) {
+        val sampleAnnotation = function.annotations.first {
+            it.shortName.asString() == config.sampleAnnotationName &&
+                    it.annotationType.resolve().declaration.packageName.asString() == config.sampleAnnotationPackage
+        }
+        var nameArg: KSValueArgument? = null
+        var upperCaseFirstCharArg: KSValueArgument? = null
+        var inlineArg: KSValueArgument? = null
+        var inlineGetterArg: KSValueArgument? = null
+        var nameTemplateArg: KSValueArgument? = null
+        var getterArg: KSValueArgument? = null
+        sampleAnnotation.arguments.forEach {
+            when(it.name?.asString()) {
+                Sample::name.name -> nameArg = it
+                Sample::nameTemplate.name -> nameTemplateArg = it
+                Sample::upperFirstChar.name -> upperCaseFirstCharArg = it
+                Sample::inline.name -> inlineArg = it
+                Sample::inlineGetter.name -> inlineGetterArg = it
+                Sample::getter.name -> getterArg = it
+            }
+        }
+        val nameValue = (nameArg?.value as? String)?.ifBlank { null }
+        val functionName = nameValue ?: function.simpleName.asString().let {
+            if ((upperCaseFirstCharArg?.value as? String)?.toBooleanStrictOrNull() ?: config.upperCaseFirstChar) {
                 it.first().uppercase() + it.substring(1)
             } else {
                 it
             }
         }
         return PropertySpec.builder(
-            name = String.format(config.nameTemplate, functionName),
+            name = String.format((nameTemplateArg?.value as? String)?.ifBlank { null } ?: config.nameTemplate, functionName),
             type = String::class
         ).apply {
             config.apply {
-                if (inline) {
+                if ((inlineArg?.value as? String)?.toBooleanStrictOrNull() ?: inline) {
                     addModifiers(KModifier.INLINE)
                 }
-                if (getter || className != null) {
+                if (((getterArg?.value as? String)?.toBooleanStrictOrNull() ?: getter) || className != null) {
                     getter(
                         FunSpec.getterBuilder()
                             .also {
-                                if (inlineGetter) {
+                                if ((inlineGetterArg?.value as? String)?.toBooleanStrictOrNull() ?:inlineGetter) {
                                     it.addModifiers(KModifier.INLINE)
                                 }
                             }
@@ -165,9 +184,9 @@ class SampleCodeProcessor(
 
         val nameTemplate: String by read("sourceCodeOf%s")
 
-        val sampleAnnotationName: String by read(Sample::class.java.simpleName)
+        val sampleAnnotationName: String by read(sampleClass.simpleName)
 
-        val sampleAnnotationPackage: String by read(Sample::class.java.packageName)
+        val sampleAnnotationPackage: String by read(sampleClass.packageName)
 
         private inline fun <reified T> read() = ReadOnlyProperty<Config, T?> { _, property ->
             properties["SourceCodeString.${property.name}"]?.parseValue()
@@ -183,6 +202,10 @@ class SampleCodeProcessor(
                 else -> throw Exception("Unknown type")
             }
         }
+    }
+
+    companion object {
+        private val sampleClass = Sample::class.java
     }
 }
 class SampleCodeProcessorProvider: SymbolProcessorProvider {
